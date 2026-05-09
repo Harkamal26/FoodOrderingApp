@@ -1,0 +1,26 @@
+.order-container{
+    width: 300px;
+    border: 2px solid black;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    font-size: large;
+    background-color: rgb(251, 251, 251);
+    /* height: 200; */
+    justify-content: center;
+
+}
+.outer-container{
+    display: flex;
+    flex-direction: column;
+    /* grid-template-columns: repeat(4,1fr); */
+    gap: 1rem;
+}
+.inner-container{
+    display: flex;
+    /* grid-template-columns: repeat(4,1fr); */
+    flex-wrap: wrap;
+    gap: 1rem;
+    
+}
