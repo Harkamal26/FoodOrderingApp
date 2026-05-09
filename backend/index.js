@@ -3,13 +3,19 @@ const bcrypt = require('bcryptjs');
 const cors = require('cors');
 const express = require('express');
 const app = express();
+require('dotenv').config();
 const jwt = require('jsonwebtoken')
-const jwt_secret = "secret key"
+const jwt_secret = process.env.JWT_SECRET
+
 // app.use(cors());// comm btw react and express
 app.use(express.json()); //to read req.body from the react
 
 app.use(cors({
-  origin: "http://localhost:5173"
+  origin: [
+    "http://localhost:5173",
+    process.env.FRONTEND_URL
+  ],
+  credentials: true
 }));
 // app.get('/',(req,resp)=>{
 //   resp.json({message:"hello"}) // .json > converts to readable form 
@@ -44,7 +50,6 @@ const Users = mongoose.model("user",userSchema);
 //   }
 //   catch(e) {console.log(e)}
 // }
-// insertUser("Harkamal",'admin@gmail.com','admin','admin');
 // FoodItems: Stores name, category (Pizza/Burger), price, imageURL, and description.
 const foodSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -92,6 +97,7 @@ async function insertFood(n,c,p,i,d){
     console.log(e)
   }
 }
+
 // async function del(){
 //   try{
 //     for(let i = 0;i<5;i++){
@@ -133,7 +139,13 @@ async function insertFood(n,c,p,i,d){
 //   }
 // }
 // mongoose.connect(uri,{dbName:'FoodOrdering'})
-mongoose.connect('mongodb://localhost:27017/foodOrdering');
+mongoose.connect(process.env.MONGO_URI)
+.then(()=>{
+  console.log("MongoDb altas connected")
+})
+.catch((e)=>{
+   console.log("Mongo Error:",e);
+});
 // insertUser("kamal","t@h","12345","admin");
 // insertFood("cheesy pizza","pizza",120,"C:\Users\komal\OneDrive\Desktop\fullstackdev\foodDeliveryApp\frontend\frontend\src\components\hill1.png","d");
 // insertFood("Burger","veg",120,"C:\Users\komal\OneDrive\Desktop\fullstackdev\foodDeliveryApp\frontend\frontend\src\components\hill1.png","d");
@@ -327,5 +339,8 @@ app.post('/api/cart/remove',async (req,res)=>{
   res.json(cart);
 })
 
-app.listen(3000,()=>console.log("server running on port 3000")
-);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT,()=>{
+   console.log(`Server running on port ${PORT}`);
+});

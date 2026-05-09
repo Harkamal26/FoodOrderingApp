@@ -1,4 +1,2 @@
-npm install bcryptjs->password hashing
-npm install mongoose->db
-// const uri = "mongodb+srv://harkamal_takhi:takhi@cluster0.atsh8jm.mongodb.net/FoodOrdering"
-npm install jsonwebtoken > 
+nothing
+
