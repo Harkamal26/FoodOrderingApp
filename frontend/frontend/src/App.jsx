@@ -11,6 +11,8 @@ import Logout from './components/Logout';
 import Orders from './components/Orders';
 import Admin from './components/Admin';
 import AddItem from './components/AddItem';
+import Unauth from './components/Unauth';
+import History from './components/History';
 const router = createBrowserRouter([
   {
     path:'/',
@@ -88,7 +90,25 @@ const router = createBrowserRouter([
      },
      {
       path:'/additem',
-      element:<AddItem/>
+      element:
+      <div>
+        <MyNavbar/>
+        <AddItem/>
+      </div>
+      
+     },
+     {
+      path:'/unauth',
+      element:<div>
+        <Unauth/>
+      </div>
+     },
+     {
+      path:'/history',
+      element:<div>
+        <MyNavbar/>
+        <History/>
+      </div>
      }
 ]);
 const App = () => {

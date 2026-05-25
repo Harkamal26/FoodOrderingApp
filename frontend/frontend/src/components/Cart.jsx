@@ -7,8 +7,8 @@ import './Cart.css'
 const Cart = () => {
   let empty = false;
   const [cart,setCart] = useState([]);
+  const [orderType,setOrderType] = useState('dinning');
   useEffect(()=>{ // when cart compnonet loads then use effet first runs > api call > whcih returns cart items of particular user
-
     const userId = localStorage.getItem('userId');
     if(!userId) return;
     // const data = JSON.parse(localStorage.getItem(`cart_${userId}`)) || [];
@@ -25,11 +25,14 @@ const Cart = () => {
   const [msg,setMsg] = useState("");
   
   const total = (cart || []).reduce((sum,item)=> sum + item.price*item.quantity,0);
+  // -------------placing order
   const onPlacing = async()=>{
     const userId =localStorage.getItem('userId')
+    const role =  localStorage.getItem('role');
     console.log(userId);
     console.log(cart)
     console.log(total)
+    console.log(orderType)
     const res = await fetch('http://localhost:3000/api/orders',{
       method:'POST',
       headers: {'Content-Type':'application/json'
@@ -37,9 +40,11 @@ const Cart = () => {
       },
       body: JSON.stringify({
         userId,
+        role,
          items: cart,
          totalAmount: total,
-         
+         status:'placed',
+         orderType: orderType
       })
     });
     const data = await res.json();
@@ -114,7 +119,13 @@ const Cart = () => {
       <h3>Total: ₹{total}</h3>
       {/* <button>Payment Gateway</button> */}
       <button onClick={onPlacing}>Place Order</button>
-      </div>:{msg}}
+      <select name="orderTaking" id=""  onClick={(e)=>setOrderType(e.target.value)}>
+        <option value="dinning">Dinning</option>
+        <option value="pickup">Pick Up</option>
+        <option value="delivery">Delivery</option>
+      </select>
+      </div>:{msg}
+      }
       
     </div>
   )

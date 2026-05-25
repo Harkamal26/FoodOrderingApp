@@ -4,19 +4,41 @@ import FoodCard from './FoodCard';
 const Home = () => {
     const [foods,setFoods] = useState([]);
     useEffect(()=>{ // helps to perform side effects(outside the normal calc of ui) like fetcgin data etc > basically for automativally 
-        fetch('http://localhost:3000/api/foods')
+        const token = localStorage.getItem('token')
+        fetch('http://localhost:3000/api/foods',{
+            method:'GET',
+            headers: {
+                'Content-Type':'application/json',
+                'Authorization':`Bearer ${token}`
+            }
+        })
         .then(res=> res.json())
-        .then(data=> setFoods(data))
+        .then(data=> {
+            if(Array.isArray(data)){
+                setFoods(data)
+            }else{
+                console.log('backend message: ',data.message);
+                setFoods([])
+            }
+        })
+        .catch(e=>{
+            console.log('error: ',e);
+            setFoods([])
+        })
     },[])
     const [search,setSearch] = useState('');
     let sname = "";
-    const matchedCategory = foods.some(item=>item.category.toLowerCase()===search.toLowerCase());
+    let matchedCategory = []
+    if(foods.length != 0)
+    matchedCategory = foods.some(item=>item.category.toLowerCase()===search.toLowerCase());
+    else {
+
+    }
     let filterFoods = [];
     if(matchedCategory){
         filterFoods = foods.filter(item=>item.category.toLowerCase()===search.toLowerCase());
     }else{
         sname = search.toLowerCase();
-        console.log(sname)
         filterFoods = foods.filter(item=>item.name.toLowerCase().includes(search.toLowerCase()))
     }
     // const filterFoods = foods.filter(i=>i.name.toLowerCase().includes(search.toLowerCase()) || i.category.toLowerCase().includes(search.toLowerCase()))

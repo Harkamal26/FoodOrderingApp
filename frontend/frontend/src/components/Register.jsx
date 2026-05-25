@@ -11,6 +11,8 @@ const Register = () => {
   const [name,setName] = useState('');
   const [email,setEmail] = useState('');
   const [password,setPassword] = useState('');
+  const [phone,setPhone] = useState(0);
+  const [address,setAddress] = useState('');
   // const [role,setRole] = useState('');
   const navigate = useNavigate();
   const handleRegister = async (e)=>{
@@ -18,7 +20,7 @@ const Register = () => {
     const response = await fetch("http://localhost:3000/api/register",{
       method: "POST",// send data  and get for taking / requesting data 
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({name,email,password}) // converts to json string so that server can read it
+      body: JSON.stringify({name,email,phone,password,address}) // converts to json string so that server can read it
     });
     const data = await response.json();
     if(response.ok){
@@ -46,6 +48,11 @@ const Register = () => {
         {/* <Form.Text className="text-muted">
           We'll never share your email with anyone else.
         </Form.Text> */}
+        <Form.Label>Phone Number</Form.Label>
+      <Form.Control type="number" placeholder="Enter phone number" value={phone} onChange={(e)=>setPhone(e.target.value)} />
+      <Form.Label>Address</Form.Label>
+      <Form.Control type="text" placeholder="Enter address" value={address} onChange={(e)=>setAddress(e.target.value)} />
+
       </Form.Group>
 
       <Form.Group className="mb-3" controlId="formBasicPassword">

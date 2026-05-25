@@ -6,10 +6,31 @@ const app = express();
 require('dotenv').config();
 const jwt = require('jsonwebtoken')
 const jwt_secret = process.env.JWT_SECRET
+const generateToken = (userId,role)=>{
+  return jwt.sign(
+    {id: userId,role:role},
+    process.env.JWT_SECRET,
+    {expiresIn: '1d'}
+  );
+};
+const verifyToken = (req,res,next)=>{
+  const authHeader = req.headers['authorization'];
+  // headers: "bearer <token>"
+  const token = authHeader && authHeader.split(' ')[1];
+  if(!token){
+    return res.status(401).json({message:'access denied: no token provoken'});
+  }
+  try{
+    const decoded = jwt.verify(token,process.env.JWT_SECRET );
+    req.user = decoded;
+    next();
+  }catch(e){
+    res.status(403).json({message:'invalid or expired token'})
+  }
 
+}
 // app.use(cors());// comm btw react and express
 app.use(express.json()); //to read req.body from the react
-
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -20,13 +41,15 @@ app.use(cors({
 // app.get('/',(req,resp)=>{
 //   resp.json({message:"hello"}) // .json > converts to readable form 
 //     // resp.send(`<h1>This is ABC company's Home Page</h1>`)
-// })
+// }).
 // Users: Stores name, email, password (hashed), and role (user or admin)
 const userSchema = new mongoose.Schema({
   name: {type:String, required: true},
   email: {type: String, unique: true, required:true},
   password: {type:String, required: true},
+  phone: {type:Number, required:true},
   role: {type:String, required: true},
+  address:{type:String,required:true}
 })
 userSchema.pre('save',async function(){ // .pre= middleware hook to allow run custom code automatcially ecery time a doc is about to be saved in db
   if(!this.isModified('password')) return;
@@ -61,8 +84,10 @@ const foodSchema = new mongoose.Schema({
 const Items = mongoose.model('Items',foodSchema);
 // foods : from back (db) tp front
 // sends food list to ui
-app.get('/api/foods',async (req,res)=>{
+app.get('/api/foods',verifyToken,async (req,res)=>{
   try{
+    // const userId = req.user.id;
+    // if(!userId) return res.json({message:'login first'})
       const foods = await Items.find();
       res.json(foods); // sends a list of food back to brw or frntend 
   }catch(e){
@@ -97,6 +122,36 @@ async function insertFood(n,c,p,i,d){
     console.log(e)
   }
 }
+const isAdmin = (req,res,next)=>{
+  if(!req.user){
+    return res.status(401).json({message: 'unauthorized: no user session found'})
+  }
+  const userRole = req.user.role;
+  console.log(userRole)
+  if(userRole !== 'admin'){
+    return res.status(403).json({message:'access forbidden: admin privileges required'})
+  }
+  next();
+}
+app.post('/api/addItems',verifyToken,isAdmin,async(req,res)=>{
+  try{
+    const {itemName,category,desc,imageUrl,price}= req.body;
+    await insertFood(itemName,category,price,imageUrl,desc);
+    return res.status(201).json({message:"Item added successfully"})
+  }catch(e){
+    res.status(500).json({message:e.message})
+  }
+})
+app.post('/api/remItems',async(req,res)=>{
+  try{
+    const {foodItemId} = req.body;
+    console.log(foodItemId)
+    await Items.deleteOne({_id:foodItemId});
+    return res.status(201).json({message:"Item removed successfully"})
+  }catch(e){
+    res.status(500).json({message:e.message})
+  }
+})
 
 // async function del(){
 //   try{
@@ -164,12 +219,12 @@ mongoose.connect(process.env.MONGO_URI)
 app.post('/api/register',async (req,res)=>{
   console.log("data received: ",req.body)
   try{
-    const {name,email,password} = req.body;
+    const {name,email,phone,password,address} = req.body;
     // check krn lyi agr user already exists
     if(email=="") return res.status(400).json({message:"You have not added email"})
     const existingUser = await Users.findOne({email});
     if(existingUser) return res.status(400).json({message:"User already exists"});
-    const newUser  = new Users({name,email,password,role: "user"});
+    const newUser  = new Users({name,email,phone,password,role: "user",address});
     await newUser.save();
     res.json({message: "User registered successfully"});
   }
@@ -178,19 +233,20 @@ app.post('/api/register',async (req,res)=>{
   res.status(500).json({message:e.message})
 }})
 // for login
+
 app.post('/api/login',async(req,res)=>{
   console.log("data received: ",req.body)
   try{
     const {email,password} = req.body;
     const user = await Users.findOne({email});
-    if(!user) return res.status(400).json({message:"User not foune=d"});
+    if(!user) return res.status(400).json({message:"User not found"});
     // hashed password nu compare krn lyi
     const isMatch = await bcrypt.compare(password,user.password);
     if(!isMatch){
       return res.status(400).json({message:"invalid credentials"})
     }
     // generate token
-    const token = jwt.sign({id: user._id,role: user.role},jwt_secret,{expiresIn: '1d'});// create secure pass so that after login they dont need to send their passs with every req
+    const token = generateToken(user._id,user.role);// create secure pass so that after login they dont need to send their passs with every req
     res.json({token,user:{id:user._id,name:user.name,role: user.role}});
     // to send to frontend so that it can use it 
   }
@@ -206,7 +262,6 @@ app.post('/api/admin',async(req,res)=>{
     console.log(password)
     // const email = "admin@gmail.com";
     const adm = await Users.findOne({email:"admin@gmail.com"});
-    console.log(adm)
     const isMatch = await bcrypt.compare(password,adm.password);
     if(!isMatch){
       return res.status(400).json({message:"Invalid Admin"})
@@ -237,7 +292,6 @@ const cartSchema = new mongoose.Schema({
     quantity: Number,
     price: Number,
     imageUrl: String,
-    
   }
   ]
 })
@@ -294,7 +348,14 @@ const orderSchema = new mongoose.Schema({
     }
   ],
   totalAmount: {type: Number,required: true},
-  status: {type: String, default: "Pending"}
+  status: {type: String, default: "Placed",
+    enum:['placed','pending','preparing','ready','out','delivered','cancelled'],
+  },
+  orderType:{
+    type:String,
+    enum:['dinning','delivery','pickup'],
+    required: true
+  },
 },{timestamps: true});
 const Orders = mongoose.model('Orders',orderSchema);
 // for placing order-ithe data aa k store ho reha 
@@ -303,13 +364,15 @@ app.post('/api/orders',async (req,res)=>{
     // const  = req.query.userId;
     // console.log("userId",userId)
     // if(!userId) return ;
-    const {userId,items,totalAmount} = req.body;
+    const {userId,role,items,totalAmount,status,orderType} = req.body;
     // console.log("incoming order: ",req.body)
     if(!userId || !items || !totalAmount) return res.status(400).json({message: "Missing fields"})
     const order = await Orders.create({
       userId,
       items,
-      totalAmount
+      totalAmount,
+      status,
+      orderType
     });
     await Cart.findOneAndDelete({userId});
     res.json(order);
@@ -319,16 +382,35 @@ app.post('/api/orders',async (req,res)=>{
   }
 })
 // itho data ja reha
-app.get('/api/orders/:userId', async (req,res)=>{
+app.post('/api/ordersFetch', async (req,res)=>{
   try{
-    const userId = req.params.userId;
+    const {userId,role} = req.body;
     if(!userId) {
       return res.status(400).json({message:"UserId required"})
     }
+    if(role==='user'){
     const order = await Orders.find({userId});
     res.json(order);
+    }else{
+      const order = await Orders.find({});
+      res.json(order);
+    }
   }catch(e){
     res.status(500).json({error: e.message})
+  }
+})
+// changeStatus
+app.post('/api/orders/status',async(req,res)=>{
+  try{
+    const {orderId,status} = req.body;  
+    const updatedOrder = await Orders.findByIdAndUpdate(
+      orderId,
+      {status:status},
+      {new: true}
+    );
+    res.json(updatedOrder);
+  }catch(e){
+    res.status(500).json({message:"server error"})
   }
 })
 app.post('/api/cart/remove',async (req,res)=>{

@@ -1,18 +1,27 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Card, Button, Form } from 'react-bootstrap'
 import { useState } from 'react'
 const FoodCard = ({item}) => {
     const [qty,setQty] = useState(1);
     // console.log(item)
+    // ------------------------------------add to cart
+    const [userId,setUserId] = useState("");
+    const [userRole,setUserRole] = useState('');
+    useEffect(()=>{
+      const user_id = localStorage.getItem('userId'); //?
+      const user_role = localStorage.getItem('role')
+      setUserId(user_id);
+      setUserRole(user_role);
+    })
     const addToCart =  async ()=>{ 
-      const userId = localStorage.getItem('userId'); //?
+      
         // const cartItem = {
         //     ...item,
         //     quantity: qty,
         //     total:qty*item.price
         // };
         // console.log(item.imageUrl)
-        await fetch('http://localhost:3000/api/cart/add',{
+        const res = await fetch('http://localhost:3000/api/cart/add',{
           method: "POST",
           headers: {
             'Content-Type':'application/json'
@@ -32,7 +41,30 @@ const FoodCard = ({item}) => {
         // let cart = JSON.parse(localStorage.getItem('cart')) || [];
         // cart.push(cartItem);
         // localStorage.setItem(`cart_${userId}`,JSON.stringify(cart));
-        alert("Added to cart");
+        const data = await res.json();
+        if(res.ok){
+          alert("Added to cart");
+        }else{
+          alert(`Error: ${data.message}`)
+        }
+        
+    }
+    const remove = async ()=>{
+      const res = await fetch('http://localhost:3000/api/remItems',{
+        method:'POST',
+        headers:{
+          'Content-Type':"application/json"
+        },
+        body: JSON.stringify({
+            foodItemId:item._id
+        })
+      })
+      const data = await res.json();
+      if(res.ok){
+        alert("Item Removed");
+      }else{
+        alert(`Error: ${data.message}`)
+      }
     }
   return (
     <div>
@@ -59,6 +91,13 @@ const FoodCard = ({item}) => {
         <Button className="mt-2" onClick={addToCart}>
           Add to Cart
         </Button>
+        {userRole==='admin' &&
+        <>
+        <Button className="mt-2" onClick={remove}>
+          Remove
+        </Button>
+        </>}
+
       </Card.Body>
     </Card>
     </div>

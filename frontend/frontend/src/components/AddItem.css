@@ -1,0 +1,13 @@
+
+.item_container{
+    gap:1rem;
+    border: 2px solid black;
+    border-radius: 2%;
+    padding: 1rem;
+    max-width: 500px;
+}
+
+.inner{
+    display: flex;
+    justify-content: space-between;
+}

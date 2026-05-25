@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import './MyNavbar.css';
 import Admin from './Admin';
 import AddItem from './AddItem';
+import History from './History';
 const MyNavbar = () => {
   // const [isLogin,setIsLogin] = useState(true);
   // useEffect(()=>{
@@ -49,6 +50,7 @@ const MyNavbar = () => {
         <>
             <Nav.Link as={Link} to={'/cart'} style={{ color: "white" }}>Cart</Nav.Link>
             <Nav.Link as={Link} to={'/orders'} style={{ color: "white" }}>Orders</Nav.Link>
+            <Nav.Link as={Link} to={'/history'} style={{ color: "white" }}>History</Nav.Link>
             {role === 'admin' &&
              <Nav.Link as={Link} to={'/additem'} style={{ color: "white" }}>Add Items</Nav.Link> }
            

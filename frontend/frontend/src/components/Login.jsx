@@ -12,14 +12,17 @@ const Login = () => {
   const [password,setPassword] = useState('');
   const navigate = useNavigate();
   const handleLogin = async (e)=>{
+    const token = localStorage.getItem('token')
     e.preventDefault(); //prevents page reload
     // console.log("Email:", email);
     // console.log("Password:", password);
     // pehla fetch houga te fir backend toh jo response aayega oh response ch aa k store houga te agr res ok aa ta local storage set kr do and pehla asi data bhej rhe aa body de through jo backend te fetch hovege check hon lyi coz is ch appa direct data fetch ni kr skde asi pehla data pa rhe aa fir check kr rhe aa k user exist krda k nhi
     const response = await fetch('http://localhost:3000/api/login',{ // feteches from backend db
       method: 'POST',
-      headers:{'Content-Type':'application/json'
-      },
+      headers: {
+                'Content-Type':'application/json',
+                'Authorization':`Bearer ${token}`
+            },
       // backend te data strings de form ch hai is lyi convert krna paina
       body: JSON.stringify({email,password})
     })
